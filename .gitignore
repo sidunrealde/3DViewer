@@ -58,3 +58,7 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+.dev.vars*
+!.dev.vars.example
+!.env.example
