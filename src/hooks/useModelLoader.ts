@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useViewerDispatch } from "@/stores/viewerStore.js";
 import { loadModel, getModelStats, getFormatFromExtension } from "@/utils/loaders.js";
+import { preprocessModel } from "@/utils/preprocess.js";
 import type { LoadedModel, SupportedFormat } from "@/types";
 
 export function useModelLoader() {
@@ -22,6 +23,9 @@ export function useModelLoader() {
         const result = await loadModel(file, mtlFile ?? null, (progress) => {
           dispatch({ type: "SET_PROGRESS", payload: progress });
         });
+
+        // Preprocess: compute normals, bounding data, enable shadows
+        preprocessModel(result.object);
 
         const stats = getModelStats(result.object);
         const loaded: LoadedModel = {

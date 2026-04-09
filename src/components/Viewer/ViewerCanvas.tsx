@@ -21,7 +21,9 @@ export default function ViewerCanvas({
         toneMappingExposure: exposure,
         outputColorSpace: SRGBColorSpace,
         pixelRatio: Math.min(window.devicePixelRatio, 2),
+        preserveDrawingBuffer: true, // Required for thumbnail capture
       }}
+      shadows
       camera={{ fov: 50, near: 0.01, far: 1000, position: [0, 0.5, 3] }}
       frameloop="demand"
       className="!absolute inset-0"
