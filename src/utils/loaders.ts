@@ -11,7 +11,6 @@ import {
   MeshStandardMaterial,
   BufferGeometry,
   Texture,
-  LoadingManager,
   type Object3D,
   Group,
 } from "three";
@@ -72,23 +71,53 @@ export function isTextureFile(filename: string): boolean {
 }
 
 /**
- * Create a LoadingManager that resolves texture filenames to blob URLs.
- * This is critical for OBJ+MTL loading where the MTL references textures by name.
+ * Read a File as text using FileReader.
  */
-function createBlobLoadingManager(fileMap: Map<string, string>): LoadingManager {
-  const manager = new LoadingManager();
-  const originalResolveURL = manager.resolveURL.bind(manager);
-  manager.resolveURL = (url: string) => {
-    // Extract just the filename from the URL (MTL may reference "textures/diffuse.jpg")
-    const filename = url.split("/").pop()?.split("\\").pop() ?? url;
+function readFileAsText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsText(file);
+  });
+}
+
+/**
+ * MTL texture reference keywords — any of these can reference a texture file.
+ */
+const MTL_TEXTURE_KEYS = [
+  "map_ka", "map_kd", "map_ks", "map_ke", "map_ns", "map_d",
+  "map_bump", "bump", "disp", "decal", "norm",
+  "map_pr", "map_pm", "map_ps",
+];
+
+/**
+ * Rewrite texture paths in MTL text to use blob URLs.
+ * Handles lines like: map_Kd texture.jpg  or  map_Kd -s 1 1 1 texture.jpg
+ * The texture filename is always the LAST token on the line.
+ */
+function rewriteMtlTexturePaths(mtlText: string, fileMap: Map<string, string>): string {
+  return mtlText.split("\n").map((line) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) return line;
+
+    const spaceIdx = trimmed.indexOf(" ");
+    if (spaceIdx < 0) return line;
+
+    const keyword = trimmed.substring(0, spaceIdx).toLowerCase();
+    if (!MTL_TEXTURE_KEYS.includes(keyword)) return line;
+
+    // The texture filename is the last space-separated token
+    const lastSpaceIdx = trimmed.lastIndexOf(" ");
+    const texturePath = trimmed.substring(lastSpaceIdx + 1).trim();
+    // Extract just the filename (strip any directory path)
+    const filename = texturePath.split("/").pop()?.split("\\").pop() ?? texturePath;
     const blobUrl = fileMap.get(filename.toLowerCase());
-    if (blobUrl) return blobUrl;
-    // Also try the full relative path as-is
-    const blobUrl2 = fileMap.get(url.toLowerCase());
-    if (blobUrl2) return blobUrl2;
-    return originalResolveURL(url);
-  };
-  return manager;
+    if (!blobUrl) return line;
+
+    // Replace the texture path with the blob URL
+    return trimmed.substring(0, lastSpaceIdx + 1) + blobUrl;
+  }).join("\n");
 }
 
 function wrapInGroup(geometry: BufferGeometry, name: string): Group {
@@ -183,34 +212,36 @@ export function loadModel(
 
         case "obj":
           if (mtlFile && mtlUrl) {
-            // Use custom loading manager so MTL can resolve texture filenames to blob URLs
-            const manager = createBlobLoadingManager(fileMap);
-            const mtlLoader = new MTLLoader(manager);
-            mtlLoader.load(
-              mtlUrl,
-              (materials) => {
-                materials.preload();
-                const objLoader = new OBJLoader(manager);
-                objLoader.setMaterials(materials);
-                objLoader.load(
-                  url,
-                  (obj) => {
-                    cleanup();
-                    resolve({ object: obj });
-                  },
-                  handleProgress,
-                  (err: unknown) => {
-                    cleanup();
-                    reject(new Error(`Failed to load OBJ: ${err instanceof Error ? err.message : String(err)}`));
-                  }
-                );
-              },
-              undefined,
-              (err: unknown) => {
-                cleanup();
-                reject(new Error(`Failed to load MTL: ${err instanceof Error ? err.message : String(err)}`));
-              }
-            );
+            // Read MTL text and rewrite texture paths to blob URLs.
+            // This avoids relying on LoadingManager.resolveURL with blob URL bases.
+            readFileAsText(mtlFile).then((mtlText) => {
+              const rewritten = rewriteMtlTexturePaths(mtlText, fileMap);
+              const mtlLoader = new MTLLoader();
+              // Parse with empty base URL — texture paths are already blob URLs
+              const materials = mtlLoader.parse(rewritten, "");
+              materials.preload();
+              const objLoader = new OBJLoader();
+              objLoader.setMaterials(materials);
+              objLoader.load(
+                url,
+                (obj) => {
+                  // Only revoke OBJ + MTL blob URLs now.
+                  // Texture blob URLs must stay alive until textures finish loading,
+                  // so we do NOT revoke them here — they're released on model disposal.
+                  URL.revokeObjectURL(url);
+                  if (mtlUrl) URL.revokeObjectURL(mtlUrl);
+                  resolve({ object: obj });
+                },
+                handleProgress,
+                (err: unknown) => {
+                  cleanup();
+                  reject(new Error(`Failed to load OBJ: ${err instanceof Error ? err.message : String(err)}`));
+                }
+              );
+            }).catch((err: unknown) => {
+              cleanup();
+              reject(new Error(`Failed to read MTL file: ${err instanceof Error ? err.message : String(err)}`));
+            });
           } else {
             new OBJLoader().load(
               url,
