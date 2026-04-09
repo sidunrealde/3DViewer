@@ -44,6 +44,8 @@ export interface ViewerState {
   showGroundShadow: boolean;
   sidebarOpen: boolean;
   envMapIndex: number;
+  /** When an OBJ loads without textures, store the File so we can reload with companion files */
+  pendingObjFile: File | null;
 }
 
 export type ViewerAction =
@@ -58,4 +60,5 @@ export type ViewerAction =
   | { type: "TOGGLE_GROUND_SHADOW" }
   | { type: "TOGGLE_SIDEBAR" }
   | { type: "SET_SIDEBAR"; payload: boolean }
-  | { type: "SET_ENV_MAP_INDEX"; payload: number };
+  | { type: "SET_ENV_MAP_INDEX"; payload: number }
+  | { type: "SET_PENDING_OBJ"; payload: File | null };

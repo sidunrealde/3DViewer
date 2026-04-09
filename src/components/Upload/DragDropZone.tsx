@@ -2,6 +2,91 @@ import { useState, useCallback, type DragEvent, type ReactNode } from "react";
 import { useModelLoader } from "@/hooks/useModelLoader.js";
 import { getFormatFromExtension, isTextureFile } from "@/utils/loaders.js";
 
+/**
+ * Recursively read all File objects from a FileSystemEntry (file or directory).
+ */
+function readEntryAsFiles(entry: FileSystemEntry): Promise<File[]> {
+  return new Promise((resolve) => {
+    if (entry.isFile) {
+      (entry as FileSystemFileEntry).file(
+        (file) => resolve([file]),
+        () => resolve([])
+      );
+    } else if (entry.isDirectory) {
+      const dirReader = (entry as FileSystemDirectoryEntry).createReader();
+      const allFiles: File[] = [];
+
+      // readEntries may return results in batches, so we must call repeatedly
+      const readBatch = () => {
+        dirReader.readEntries(
+          async (entries) => {
+            if (entries.length === 0) {
+              resolve(allFiles);
+              return;
+            }
+            const nested = await Promise.all(entries.map(readEntryAsFiles));
+            for (const files of nested) allFiles.push(...files);
+            readBatch(); // read next batch
+          },
+          () => resolve(allFiles)
+        );
+      };
+      readBatch();
+    } else {
+      resolve([]);
+    }
+  });
+}
+
+/**
+ * Extract all files from a drop event, supporting both individual files and folders.
+ */
+async function extractDroppedFiles(dataTransfer: DataTransfer): Promise<File[]> {
+  const items = dataTransfer.items;
+
+  // Try the webkitGetAsEntry API first (supports folder scanning)
+  if (items && items.length > 0 && typeof items[0]?.webkitGetAsEntry === "function") {
+    const entries: FileSystemEntry[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const entry = items[i]?.webkitGetAsEntry();
+      if (entry) entries.push(entry);
+    }
+    const nested = await Promise.all(entries.map(readEntryAsFiles));
+    return nested.flat();
+  }
+
+  // Fallback: plain FileList
+  const files: File[] = [];
+  for (let i = 0; i < dataTransfer.files.length; i++) {
+    files.push(dataTransfer.files[i]!);
+  }
+  return files;
+}
+
+function classifyAndLoad(
+  files: File[],
+  load: (file: File, mtlFile?: File | null, textureFiles?: File[]) => void
+) {
+  let modelFile: File | null = null;
+  let mtlFile: File | null = null;
+  const textureFiles: File[] = [];
+
+  for (const f of files) {
+    const name = f.name.toLowerCase();
+    if (name.endsWith(".mtl")) {
+      mtlFile = f;
+    } else if (isTextureFile(f.name)) {
+      textureFiles.push(f);
+    } else if (getFormatFromExtension(f.name)) {
+      modelFile = f;
+    }
+  }
+
+  if (modelFile) {
+    load(modelFile, mtlFile, textureFiles.length > 0 ? textureFiles : undefined);
+  }
+}
+
 export default function DragDropZone({ children }: { children: ReactNode }) {
   const [dragging, setDragging] = useState(false);
   const { load } = useModelLoader();
@@ -15,7 +100,6 @@ export default function DragDropZone({ children }: { children: ReactNode }) {
   const handleDragLeave = useCallback((e: DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Only set false when leaving the zone entirely
     const related = e.relatedTarget as Node | null;
     if (!e.currentTarget.contains(related)) {
       setDragging(false);
@@ -33,27 +117,9 @@ export default function DragDropZone({ children }: { children: ReactNode }) {
       e.stopPropagation();
       setDragging(false);
 
-      const files = e.dataTransfer.files;
-      if (!files || files.length === 0) return;
-
-      let modelFile: File | null = null;
-      let mtlFile: File | null = null;
-      const textureFiles: File[] = [];
-
-      for (let i = 0; i < files.length; i++) {
-        const f = files[i]!;
-        if (f.name.toLowerCase().endsWith(".mtl")) {
-          mtlFile = f;
-        } else if (isTextureFile(f.name)) {
-          textureFiles.push(f);
-        } else if (getFormatFromExtension(f.name)) {
-          modelFile = f;
-        }
-      }
-
-      if (modelFile) {
-        load(modelFile, mtlFile, textureFiles.length > 0 ? textureFiles : undefined);
-      }
+      extractDroppedFiles(e.dataTransfer).then((files) => {
+        classifyAndLoad(files, load);
+      });
     },
     [load]
   );
@@ -85,9 +151,9 @@ export default function DragDropZone({ children }: { children: ReactNode }) {
                 d="M12 16V4m0 0l-4 4m4-4l4 4M4 20h16"
               />
             </svg>
-            <p className="text-lg font-medium text-violet-200">Drop your 3D model here</p>
+            <p className="text-lg font-medium text-violet-200">Drop your 3D model or folder here</p>
             <p className="mt-1 text-sm text-violet-400">
-              glTF, GLB, FBX, OBJ, STL, PLY, 3DS
+              glTF, GLB, FBX, OBJ (+MTL & textures), STL, PLY, 3DS
             </p>
           </div>
         </div>

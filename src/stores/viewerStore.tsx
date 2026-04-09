@@ -12,6 +12,7 @@ const initialState: ViewerState = {
   showGroundShadow: true,
   sidebarOpen: false,
   envMapIndex: 0,
+  pendingObjFile: null,
 };
 
 function viewerReducer(state: ViewerState, action: ViewerAction): ViewerState {
@@ -19,7 +20,7 @@ function viewerReducer(state: ViewerState, action: ViewerAction): ViewerState {
     case "SET_MODEL":
       return { ...state, model: action.payload, loading: false, loadingProgress: 100, error: null };
     case "CLEAR_MODEL":
-      return { ...state, model: null };
+      return { ...state, model: null, pendingObjFile: null };
     case "SET_LOADING":
       return { ...state, loading: action.payload, error: action.payload ? null : state.error };
     case "SET_PROGRESS":
@@ -40,6 +41,8 @@ function viewerReducer(state: ViewerState, action: ViewerAction): ViewerState {
       return { ...state, sidebarOpen: action.payload };
     case "SET_ENV_MAP_INDEX":
       return { ...state, envMapIndex: action.payload };
+    case "SET_PENDING_OBJ":
+      return { ...state, pendingObjFile: action.payload };
     default:
       return state;
   }

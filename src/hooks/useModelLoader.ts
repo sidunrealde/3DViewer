@@ -18,6 +18,7 @@ export function useModelLoader() {
       dispatch({ type: "SET_LOADING", payload: true });
       dispatch({ type: "SET_PROGRESS", payload: 0 });
       dispatch({ type: "SET_ERROR", payload: null });
+      dispatch({ type: "SET_PENDING_OBJ", payload: null });
 
       try {
         const result = await loadModel(file, mtlFile ?? null, (progress) => {
@@ -41,6 +42,13 @@ export function useModelLoader() {
         };
 
         dispatch({ type: "SET_MODEL", payload: loaded });
+
+        // If this is an OBJ with no textures and no MTL was provided,
+        // store the file so the user can add companion files later
+        if (format === "obj" && stats.textures === 0 && !mtlFile) {
+          dispatch({ type: "SET_PENDING_OBJ", payload: file });
+        }
+
         return loaded;
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to load model";

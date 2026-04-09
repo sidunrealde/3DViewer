@@ -3,6 +3,7 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { ViewerProvider, useViewerState, useViewerDispatch } from "@/stores/viewerStore.js";
 import ViewerCanvas from "@/components/Viewer/ViewerCanvas.js";
 import DragDropZone from "@/components/Upload/DragDropZone.js";
+import CompanionFileBanner from "@/components/Upload/CompanionFileBanner.js";
 import Toolbar from "@/components/UI/Toolbar.js";
 import Sidebar from "@/components/UI/Sidebar.js";
 import { useRecentModels } from "@/hooks/useRecentModels.js";
@@ -93,10 +94,10 @@ function AppContent() {
               </div>
               <h2 className="text-lg font-semibold text-neutral-200">3D Model Viewer</h2>
               <p className="mt-1 text-sm text-neutral-500">
-                Drop a model here or click Upload
+                Drop a model or folder here, or click Upload
               </p>
               <p className="mt-1 text-xs text-neutral-600">
-                Supports glTF, GLB, FBX, OBJ, STL, PLY, 3DS
+                Supports glTF, GLB, FBX, OBJ (+MTL & textures), STL, PLY, 3DS
               </p>
             </div>
           </div>
@@ -143,6 +144,9 @@ function AppContent() {
       <div className="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2">
         <Toolbar onResetCamera={handleResetCamera} />
       </div>
+
+      {/* Companion file prompt for OBJ without textures */}
+      <CompanionFileBanner />
 
       {/* Sidebar */}
       <Sidebar recents={recents} onClearRecent={clearRecent} />
