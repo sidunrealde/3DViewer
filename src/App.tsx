@@ -1,16 +1,159 @@
-import { useRef } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import { ViewerProvider } from "@/stores/viewerStore.js";
+import { ViewerProvider, useViewerState, useViewerDispatch } from "@/stores/viewerStore.js";
 import ViewerCanvas from "@/components/Viewer/ViewerCanvas.js";
+import DragDropZone from "@/components/Upload/DragDropZone.js";
+import Toolbar from "@/components/UI/Toolbar.js";
+import Sidebar from "@/components/UI/Sidebar.js";
+import { useRecentModels } from "@/hooks/useRecentModels.js";
+import type { LightingPreset } from "@/types";
 
-export default function App() {
+function AppContent() {
   const controlsRef = useRef<OrbitControlsImpl>(null);
+  const { model, loading, loadingProgress, error } = useViewerState();
+  const dispatch = useViewerDispatch();
+  const { recents, addRecent, clearRecent } = useRecentModels();
+
+  const handleResetCamera = useCallback(() => {
+    controlsRef.current?.reset();
+  }, []);
+
+  // Capture thumbnail when model finishes loading
+  useEffect(() => {
+    if (!model) return;
+
+    // Wait a frame for render to complete, then capture thumbnail
+    const timeout = setTimeout(() => {
+      const canvas = document.querySelector("canvas");
+      if (canvas) {
+        try {
+          const thumbnail = canvas.toDataURL("image/jpeg", 0.6);
+          addRecent(model, thumbnail);
+        } catch {
+          addRecent(model, "");
+        }
+      }
+    }, 500);
+
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [model]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Don't trigger when typing in inputs
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      const presetMap: Record<string, LightingPreset> = {
+        "1": "studio",
+        "2": "environment",
+        "3": "unlit",
+        "4": "wireframe",
+        "5": "normals",
+      };
+
+      if (e.key in presetMap) {
+        dispatch({ type: "SET_LIGHTING_PRESET", payload: presetMap[e.key]! });
+      } else if (e.key.toLowerCase() === "r") {
+        handleResetCamera();
+      } else if (e.key === " ") {
+        e.preventDefault();
+        dispatch({ type: "TOGGLE_SIDEBAR" });
+      }
+    };
+
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [dispatch, handleResetCamera]);
 
   return (
-    <ViewerProvider>
-      <div className="relative h-dvh w-dvw overflow-hidden bg-neutral-950 text-white">
+    <div className="relative h-dvh w-dvw overflow-hidden bg-neutral-950 text-white">
+      <DragDropZone>
         <ViewerCanvas controlsRef={controlsRef} />
+
+        {/* Empty state */}
+        {!model && !loading && (
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-neutral-900/80">
+                <svg
+                  className="h-10 w-10 text-violet-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-lg font-semibold text-neutral-200">3D Model Viewer</h2>
+              <p className="mt-1 text-sm text-neutral-500">
+                Drop a model here or click Upload
+              </p>
+              <p className="mt-1 text-xs text-neutral-600">
+                Supports glTF, GLB, FBX, OBJ, STL, PLY, 3DS
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Loading overlay */}
+        {loading && (
+          <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-neutral-950/60 backdrop-blur-sm">
+            <div className="text-center">
+              <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-neutral-700 border-t-violet-500" />
+              <p className="text-sm text-neutral-300">Loading model...</p>
+              {loadingProgress > 0 && loadingProgress < 100 && (
+                <div className="mx-auto mt-2 h-1.5 w-48 overflow-hidden rounded-full bg-neutral-800">
+                  <div
+                    className="h-full rounded-full bg-violet-500 transition-all duration-300"
+                    style={{ width: `${loadingProgress}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Error toast */}
+        {error && (
+          <div className="absolute bottom-4 left-1/2 z-30 -translate-x-1/2">
+            <div className="flex items-center gap-2 rounded-lg bg-red-900/90 px-4 py-2.5 text-sm text-red-200 shadow-lg backdrop-blur-md">
+              <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.999L13.732 4.001c-.77-1.333-2.694-1.333-3.464 0L3.34 16.001C2.57 17.335 3.532 19 5.072 19z" />
+              </svg>
+              <span>{error}</span>
+              <button
+                onClick={() => dispatch({ type: "SET_ERROR", payload: null })}
+                className="ml-2 text-red-400 hover:text-red-200"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+      </DragDropZone>
+
+      {/* Toolbar */}
+      <div className="pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2">
+        <Toolbar onResetCamera={handleResetCamera} />
       </div>
+
+      {/* Sidebar */}
+      <Sidebar recents={recents} onClearRecent={clearRecent} />
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ViewerProvider>
+      <AppContent />
     </ViewerProvider>
   );
 }
