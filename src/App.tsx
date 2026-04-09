@@ -125,7 +125,7 @@ function AppContent() {
         <img
           src="/icons/OpEzeeLogo.png"
           alt="Company logo"
-          className="h-8 w-auto opacity-40 sm:h-10"
+          className="h-40 w-auto opacity-40 sm:h-48"
         />
       </div>
     </div>

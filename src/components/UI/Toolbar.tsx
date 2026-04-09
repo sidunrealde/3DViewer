@@ -7,12 +7,6 @@ const PRESETS: { id: LightingPreset; label: string; shortcut: string }[] = [
   { id: "unlit", label: "Unlit", shortcut: "2" },
 ];
 
-function formatCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
-}
-
 export default function Toolbar({
   onResetCamera,
 }: {
@@ -63,20 +57,19 @@ export default function Toolbar({
         </svg>
       </button>
 
-      {/* Model info — only on larger screens */}
+      {/* Clear model */}
       {model && (
         <>
-          <div className="hidden h-6 w-px bg-neutral-700 sm:block" />
-          <div className="hidden items-center gap-3 text-xs text-neutral-400 sm:flex">
-            <span className="max-w-[150px] truncate font-medium text-neutral-200" title={model.info.name}>
-              {model.info.name}
-            </span>
-            <span title="Triangles">△ {formatCount(model.info.triangles)}</span>
-            <span title="Vertices">⬡ {formatCount(model.info.vertices)}</span>
-            {model.info.textures > 0 && (
-              <span title="Textures">🖼 {model.info.textures}</span>
-            )}
-          </div>
+          <div className="h-6 w-px bg-neutral-700" />
+          <button
+            onClick={() => dispatch({ type: "CLEAR_MODEL" })}
+            className="rounded-lg p-2 text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
+            title="Clear model"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </>
       )}
     </div>
