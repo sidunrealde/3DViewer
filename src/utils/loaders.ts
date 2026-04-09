@@ -11,6 +11,7 @@ import {
   MeshStandardMaterial,
   BufferGeometry,
   Texture,
+  LoadingManager,
   type Object3D,
   Group,
 } from "three";
@@ -61,7 +62,34 @@ export function getFormatFromExtension(filename: string): SupportedFormat | null
 }
 
 export const SUPPORTED_EXTENSIONS = [".gltf", ".glb", ".fbx", ".obj", ".stl", ".ply", ".3ds"];
+export const TEXTURE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".bmp", ".tga", ".tif", ".tiff", ".webp"];
 export const ACCEPT_STRING = SUPPORTED_EXTENSIONS.join(",");
+export const ACCEPT_STRING_WITH_TEXTURES = [...SUPPORTED_EXTENSIONS, ".mtl", ...TEXTURE_EXTENSIONS].join(",");
+
+export function isTextureFile(filename: string): boolean {
+  const ext = "." + (filename.split(".").pop()?.toLowerCase() ?? "");
+  return TEXTURE_EXTENSIONS.includes(ext);
+}
+
+/**
+ * Create a LoadingManager that resolves texture filenames to blob URLs.
+ * This is critical for OBJ+MTL loading where the MTL references textures by name.
+ */
+function createBlobLoadingManager(fileMap: Map<string, string>): LoadingManager {
+  const manager = new LoadingManager();
+  const originalResolveURL = manager.resolveURL.bind(manager);
+  manager.resolveURL = (url: string) => {
+    // Extract just the filename from the URL (MTL may reference "textures/diffuse.jpg")
+    const filename = url.split("/").pop()?.split("\\").pop() ?? url;
+    const blobUrl = fileMap.get(filename.toLowerCase());
+    if (blobUrl) return blobUrl;
+    // Also try the full relative path as-is
+    const blobUrl2 = fileMap.get(url.toLowerCase());
+    if (blobUrl2) return blobUrl2;
+    return originalResolveURL(url);
+  };
+  return manager;
+}
 
 function wrapInGroup(geometry: BufferGeometry, name: string): Group {
   const material = new MeshStandardMaterial({ color: 0xcccccc, roughness: 0.7, metalness: 0.1 });
@@ -83,7 +111,8 @@ export interface LoadResult {
 export function loadModel(
   file: File,
   mtlFile: File | null,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
+  textureFiles?: File[]
 ): Promise<LoadResult> {
   const format = getFormatFromExtension(file.name);
   if (!format) {
@@ -93,9 +122,23 @@ export function loadModel(
   const url = URL.createObjectURL(file);
   const mtlUrl = mtlFile ? URL.createObjectURL(mtlFile) : null;
 
+  // Build a filename→blobURL map for texture resolution
+  const blobUrls: string[] = [url];
+  if (mtlUrl) blobUrls.push(mtlUrl);
+  const fileMap = new Map<string, string>();
+  if (textureFiles) {
+    for (const tf of textureFiles) {
+      const blobUrl = URL.createObjectURL(tf);
+      blobUrls.push(blobUrl);
+      fileMap.set(tf.name.toLowerCase(), blobUrl);
+      // Also map without directory prefix
+      const baseName = tf.name.split("/").pop()?.split("\\").pop();
+      if (baseName) fileMap.set(baseName.toLowerCase(), blobUrl);
+    }
+  }
+
   const cleanup = () => {
-    URL.revokeObjectURL(url);
-    if (mtlUrl) URL.revokeObjectURL(mtlUrl);
+    for (const u of blobUrls) URL.revokeObjectURL(u);
   };
 
   const handleProgress = (event: ProgressEvent) => {
@@ -140,12 +183,14 @@ export function loadModel(
 
         case "obj":
           if (mtlFile && mtlUrl) {
-            const mtlLoader = new MTLLoader();
+            // Use custom loading manager so MTL can resolve texture filenames to blob URLs
+            const manager = createBlobLoadingManager(fileMap);
+            const mtlLoader = new MTLLoader(manager);
             mtlLoader.load(
               mtlUrl,
               (materials) => {
                 materials.preload();
-                const objLoader = new OBJLoader();
+                const objLoader = new OBJLoader(manager);
                 objLoader.setMaterials(materials);
                 objLoader.load(
                   url,
@@ -154,7 +199,7 @@ export function loadModel(
                     resolve({ object: obj });
                   },
                   handleProgress,
-                  (err) => {
+                  (err: unknown) => {
                     cleanup();
                     reject(new Error(`Failed to load OBJ: ${err instanceof Error ? err.message : String(err)}`));
                   }

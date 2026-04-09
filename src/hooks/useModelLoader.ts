@@ -8,7 +8,7 @@ export function useModelLoader() {
   const dispatch = useViewerDispatch();
 
   const load = useCallback(
-    async (file: File, mtlFile?: File | null) => {
+    async (file: File, mtlFile?: File | null, textureFiles?: File[]) => {
       const format = getFormatFromExtension(file.name);
       if (!format) {
         dispatch({ type: "SET_ERROR", payload: `Unsupported format: ${file.name}` });
@@ -22,7 +22,7 @@ export function useModelLoader() {
       try {
         const result = await loadModel(file, mtlFile ?? null, (progress) => {
           dispatch({ type: "SET_PROGRESS", payload: progress });
-        });
+        }, textureFiles);
 
         // Preprocess: compute normals, bounding data, enable shadows
         preprocessModel(result.object);

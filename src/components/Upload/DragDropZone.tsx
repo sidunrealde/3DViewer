@@ -1,6 +1,6 @@
 import { useState, useCallback, type DragEvent, type ReactNode } from "react";
 import { useModelLoader } from "@/hooks/useModelLoader.js";
-import { getFormatFromExtension } from "@/utils/loaders.js";
+import { getFormatFromExtension, isTextureFile } from "@/utils/loaders.js";
 
 export default function DragDropZone({ children }: { children: ReactNode }) {
   const [dragging, setDragging] = useState(false);
@@ -38,18 +38,21 @@ export default function DragDropZone({ children }: { children: ReactNode }) {
 
       let modelFile: File | null = null;
       let mtlFile: File | null = null;
+      const textureFiles: File[] = [];
 
       for (let i = 0; i < files.length; i++) {
         const f = files[i]!;
         if (f.name.toLowerCase().endsWith(".mtl")) {
           mtlFile = f;
+        } else if (isTextureFile(f.name)) {
+          textureFiles.push(f);
         } else if (getFormatFromExtension(f.name)) {
           modelFile = f;
         }
       }
 
       if (modelFile) {
-        load(modelFile, mtlFile);
+        load(modelFile, mtlFile, textureFiles.length > 0 ? textureFiles : undefined);
       }
     },
     [load]

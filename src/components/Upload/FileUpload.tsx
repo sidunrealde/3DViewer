@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { useModelLoader } from "@/hooks/useModelLoader.js";
-import { ACCEPT_STRING, getFormatFromExtension } from "@/utils/loaders.js";
+import { ACCEPT_STRING_WITH_TEXTURES, getFormatFromExtension, isTextureFile } from "@/utils/loaders.js";
 
 export default function FileUpload() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -12,18 +12,21 @@ export default function FileUpload() {
 
     let modelFile: File | null = null;
     let mtlFile: File | null = null;
+    const textureFiles: File[] = [];
 
     for (let i = 0; i < files.length; i++) {
       const f = files[i]!;
       if (f.name.toLowerCase().endsWith(".mtl")) {
         mtlFile = f;
+      } else if (isTextureFile(f.name)) {
+        textureFiles.push(f);
       } else if (getFormatFromExtension(f.name)) {
         modelFile = f;
       }
     }
 
     if (modelFile) {
-      load(modelFile, mtlFile);
+      load(modelFile, mtlFile, textureFiles.length > 0 ? textureFiles : undefined);
     }
 
     // Reset input so same file can be re-uploaded
@@ -37,7 +40,7 @@ export default function FileUpload() {
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPT_STRING + ",.mtl"}
+        accept={ACCEPT_STRING_WITH_TEXTURES}
         multiple
         onChange={handleChange}
         className="hidden"

@@ -39,8 +39,8 @@ if (-not $env:CLOUDFLARE_ACCOUNT_ID) {
 }
 
 Write-Host "`n[1/3] Installing dependencies..." -ForegroundColor Cyan
-npm ci --silent
-if ($LASTEXITCODE -ne 0) { Write-Host "[!] npm ci failed" -ForegroundColor Red; exit 1 }
+npm install --silent
+if ($LASTEXITCODE -ne 0) { Write-Host "[!] npm install failed" -ForegroundColor Red; exit 1 }
 
 Write-Host "[2/3] Building..." -ForegroundColor Cyan
 npm run build
