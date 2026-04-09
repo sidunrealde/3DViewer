@@ -4,11 +4,7 @@ export type SupportedFormat = "gltf" | "glb" | "fbx" | "obj" | "stl" | "ply" | "
 
 export type LightingPreset =
   | "studio"
-  | "unlit"
-  | "matcap"
-  | "wireframe"
-  | "normals"
-  | "environment";
+  | "unlit";
 
 export interface ModelInfo {
   name: string;
@@ -24,26 +20,12 @@ export interface LoadedModel {
   info: ModelInfo;
 }
 
-export interface RecentModel {
-  id: string;
-  name: string;
-  format: SupportedFormat;
-  fileSize: number;
-  date: number;
-  thumbnail: string; // base64 data URL
-}
-
 export interface ViewerState {
   model: LoadedModel | null;
   loading: boolean;
   loadingProgress: number;
   error: string | null;
   lightingPreset: LightingPreset;
-  lightIntensity: number;
-  exposure: number;
-  showGroundShadow: boolean;
-  sidebarOpen: boolean;
-  envMapIndex: number;
   /** When an OBJ loads without textures, store the File so we can reload with companion files */
   pendingObjFile: File | null;
 }
@@ -55,10 +37,4 @@ export type ViewerAction =
   | { type: "SET_PROGRESS"; payload: number }
   | { type: "SET_ERROR"; payload: string | null }
   | { type: "SET_LIGHTING_PRESET"; payload: LightingPreset }
-  | { type: "SET_LIGHT_INTENSITY"; payload: number }
-  | { type: "SET_EXPOSURE"; payload: number }
-  | { type: "TOGGLE_GROUND_SHADOW" }
-  | { type: "TOGGLE_SIDEBAR" }
-  | { type: "SET_SIDEBAR"; payload: boolean }
-  | { type: "SET_ENV_MAP_INDEX"; payload: number }
   | { type: "SET_PENDING_OBJ"; payload: File | null };

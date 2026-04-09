@@ -5,62 +5,31 @@ import ViewerCanvas from "@/components/Viewer/ViewerCanvas.js";
 import DragDropZone from "@/components/Upload/DragDropZone.js";
 import CompanionFileBanner from "@/components/Upload/CompanionFileBanner.js";
 import Toolbar from "@/components/UI/Toolbar.js";
-import Sidebar from "@/components/UI/Sidebar.js";
-import { useRecentModels } from "@/hooks/useRecentModels.js";
 import type { LightingPreset } from "@/types";
 
 function AppContent() {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const { model, loading, loadingProgress, error } = useViewerState();
   const dispatch = useViewerDispatch();
-  const { recents, addRecent, clearRecent } = useRecentModels();
 
   const handleResetCamera = useCallback(() => {
     controlsRef.current?.reset();
   }, []);
 
-  // Capture thumbnail when model finishes loading
-  useEffect(() => {
-    if (!model) return;
-
-    // Wait a frame for render to complete, then capture thumbnail
-    const timeout = setTimeout(() => {
-      const canvas = document.querySelector("canvas");
-      if (canvas) {
-        try {
-          const thumbnail = canvas.toDataURL("image/jpeg", 0.6);
-          addRecent(model, thumbnail);
-        } catch {
-          addRecent(model, "");
-        }
-      }
-    }, 500);
-
-    return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [model]);
-
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Don't trigger when typing in inputs
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
       const presetMap: Record<string, LightingPreset> = {
         "1": "studio",
-        "2": "environment",
-        "3": "unlit",
-        "4": "wireframe",
-        "5": "normals",
+        "2": "unlit",
       };
 
       if (e.key in presetMap) {
         dispatch({ type: "SET_LIGHTING_PRESET", payload: presetMap[e.key]! });
       } else if (e.key.toLowerCase() === "r") {
         handleResetCamera();
-      } else if (e.key === " ") {
-        e.preventDefault();
-        dispatch({ type: "TOGGLE_SIDEBAR" });
       }
     };
 
@@ -92,7 +61,7 @@ function AppContent() {
                   />
                 </svg>
               </div>
-              <h2 className="text-lg font-semibold text-neutral-200">3D Model Viewer</h2>
+              <h2 className="text-lg font-semibold text-neutral-200">Photogrammetry Model Viewer</h2>
               <p className="mt-1 text-sm text-neutral-500 sm:hidden">
                 Tap Upload to open a model
               </p>
@@ -151,8 +120,14 @@ function AppContent() {
       {/* Companion file prompt for OBJ without textures */}
       <CompanionFileBanner />
 
-      {/* Sidebar */}
-      <Sidebar recents={recents} onClearRecent={clearRecent} />
+      {/* Company logo watermark */}
+      <div className="pointer-events-none absolute bottom-3 left-3 z-10">
+        <img
+          src="/icons/OpEzeeLogo.png"
+          alt="Company logo"
+          className="h-8 w-auto opacity-40 sm:h-10"
+        />
+      </div>
     </div>
   );
 }

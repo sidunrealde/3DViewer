@@ -5,7 +5,6 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import ModelScene from "./ModelScene.js";
 import CameraControls from "./CameraControls.js";
 import LightingSystem from "./LightingSystem.js";
-import { useViewerState } from "@/stores/viewerStore.js";
 
 function SceneGrid() {
   return (
@@ -30,14 +29,12 @@ export default function ViewerCanvas({
 }: {
   controlsRef: React.RefObject<OrbitControlsImpl | null>;
 }) {
-  const { exposure } = useViewerState();
-
   return (
     <Canvas
       gl={{
         antialias: true,
         toneMapping: ACESFilmicToneMapping,
-        toneMappingExposure: exposure,
+        toneMappingExposure: 1,
         outputColorSpace: SRGBColorSpace,
         pixelRatio: Math.min(window.devicePixelRatio, 2),
         preserveDrawingBuffer: true, // Required for thumbnail capture

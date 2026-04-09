@@ -1,7 +1,7 @@
 {
-  "name": "3D Viewer",
-  "short_name": "3D Viewer",
-  "description": "View photogrammetry 3D models in multiple lighting scenarios. Supports glTF, GLB, FBX, OBJ, STL, PLY.",
+  "name": "Photogrammetry Viewer",
+  "short_name": "Photo Viewer",
+  "description": "View photogrammetry 3D scans in studio and unlit modes. Supports glTF, GLB, FBX, OBJ, STL, PLY.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",

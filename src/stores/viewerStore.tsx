@@ -7,11 +7,6 @@ const initialState: ViewerState = {
   loadingProgress: 0,
   error: null,
   lightingPreset: "studio",
-  lightIntensity: 1,
-  exposure: 1,
-  showGroundShadow: true,
-  sidebarOpen: false,
-  envMapIndex: 0,
   pendingObjFile: null,
 };
 
@@ -29,18 +24,6 @@ function viewerReducer(state: ViewerState, action: ViewerAction): ViewerState {
       return { ...state, error: action.payload, loading: false };
     case "SET_LIGHTING_PRESET":
       return { ...state, lightingPreset: action.payload };
-    case "SET_LIGHT_INTENSITY":
-      return { ...state, lightIntensity: action.payload };
-    case "SET_EXPOSURE":
-      return { ...state, exposure: action.payload };
-    case "TOGGLE_GROUND_SHADOW":
-      return { ...state, showGroundShadow: !state.showGroundShadow };
-    case "TOGGLE_SIDEBAR":
-      return { ...state, sidebarOpen: !state.sidebarOpen };
-    case "SET_SIDEBAR":
-      return { ...state, sidebarOpen: action.payload };
-    case "SET_ENV_MAP_INDEX":
-      return { ...state, envMapIndex: action.payload };
     case "SET_PENDING_OBJ":
       return { ...state, pendingObjFile: action.payload };
     default:
