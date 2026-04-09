@@ -1,4 +1,5 @@
 import { useThree } from "@react-three/fiber";
+import { Environment } from "@react-three/drei";
 import { useViewerState } from "@/stores/viewerStore.js";
 import { useEffect, useMemo } from "react";
 import {
@@ -63,7 +64,7 @@ function setWireframe(obj: Object3D, wireframe: boolean) {
 }
 
 export default function LightingSystem() {
-  const { lightingPreset, lightIntensity, model, showGroundShadow } = useViewerState();
+  const { lightingPreset, lightIntensity, model, showGroundShadow, envMapIndex } = useViewerState();
   const { invalidate } = useThree();
 
   const unlitMat = useMemo(() => new MeshBasicMaterial(), []);
@@ -121,10 +122,19 @@ export default function LightingSystem() {
 
   const isLit = lightingPreset === "studio" || lightingPreset === "environment";
 
+  // drei preset names for environment maps
+  const envPresets = ["studio", "sunset", "warehouse"] as const;
+  const currentEnvPreset = envPresets[envMapIndex] ?? "studio";
+
   return (
     <>
-      {/* Studio lights — only active in lit modes */}
-      {isLit && (
+      {/* HDR environment map */}
+      {lightingPreset === "environment" && (
+        <Environment preset={currentEnvPreset} background={false} />
+      )}
+
+      {/* Studio lights — only active in studio mode */}
+      {lightingPreset === "studio" && (
         <>
           <ambientLight intensity={0.4 * lightIntensity} />
           <directionalLight
@@ -137,6 +147,11 @@ export default function LightingSystem() {
           <directionalLight position={[-3, 4, -5]} intensity={0.5 * lightIntensity} />
           <directionalLight position={[0, -2, 5]} intensity={0.2 * lightIntensity} />
         </>
+      )}
+
+      {/* Environment mode gets subtle fill light */}
+      {lightingPreset === "environment" && (
+        <ambientLight intensity={0.2 * lightIntensity} />
       )}
 
       {/* Minimal ambient for non-lit presets so matcap/unlit are visible */}
