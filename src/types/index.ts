@@ -2,10 +2,6 @@ import type { Object3D } from "three";
 
 export type SupportedFormat = "gltf" | "glb" | "fbx" | "obj" | "stl" | "ply" | "3ds";
 
-export type LightingPreset =
-  | "studio"
-  | "unlit";
-
 export interface ModelInfo {
   name: string;
   format: SupportedFormat;
@@ -25,7 +21,6 @@ export interface ViewerState {
   loading: boolean;
   loadingProgress: number;
   error: string | null;
-  lightingPreset: LightingPreset;
   /** When an OBJ loads without textures, store the File so we can reload with companion files */
   pendingObjFile: File | null;
 }
@@ -36,5 +31,4 @@ export type ViewerAction =
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_PROGRESS"; payload: number }
   | { type: "SET_ERROR"; payload: string | null }
-  | { type: "SET_LIGHTING_PRESET"; payload: LightingPreset }
   | { type: "SET_PENDING_OBJ"; payload: File | null };

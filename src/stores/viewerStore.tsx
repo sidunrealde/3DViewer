@@ -6,7 +6,6 @@ const initialState: ViewerState = {
   loading: false,
   loadingProgress: 0,
   error: null,
-  lightingPreset: "studio",
   pendingObjFile: null,
 };
 
@@ -22,8 +21,6 @@ function viewerReducer(state: ViewerState, action: ViewerAction): ViewerState {
       return { ...state, loadingProgress: action.payload };
     case "SET_ERROR":
       return { ...state, error: action.payload, loading: false };
-    case "SET_LIGHTING_PRESET":
-      return { ...state, lightingPreset: action.payload };
     case "SET_PENDING_OBJ":
       return { ...state, pendingObjFile: action.payload };
     default:

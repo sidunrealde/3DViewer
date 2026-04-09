@@ -5,7 +5,6 @@ import ViewerCanvas from "@/components/Viewer/ViewerCanvas.js";
 import DragDropZone from "@/components/Upload/DragDropZone.js";
 import CompanionFileBanner from "@/components/Upload/CompanionFileBanner.js";
 import Toolbar from "@/components/UI/Toolbar.js";
-import type { LightingPreset } from "@/types";
 
 function AppContent() {
   const controlsRef = useRef<OrbitControlsImpl>(null);
@@ -21,14 +20,7 @@ function AppContent() {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-      const presetMap: Record<string, LightingPreset> = {
-        "1": "studio",
-        "2": "unlit",
-      };
-
-      if (e.key in presetMap) {
-        dispatch({ type: "SET_LIGHTING_PRESET", payload: presetMap[e.key]! });
-      } else if (e.key.toLowerCase() === "r") {
+      if (e.key.toLowerCase() === "r") {
         handleResetCamera();
       }
     };
@@ -61,7 +53,7 @@ function AppContent() {
                   />
                 </svg>
               </div>
-              <h2 className="text-lg font-semibold text-neutral-200">Photogrammetry Model Viewer</h2>
+              <h2 className="text-lg font-semibold text-neutral-200">Photogrammetry Viewer</h2>
               <p className="mt-1 text-sm text-neutral-500 sm:hidden">
                 Tap Upload to open a model
               </p>
