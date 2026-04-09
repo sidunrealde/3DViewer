@@ -93,11 +93,14 @@ function AppContent() {
                 </svg>
               </div>
               <h2 className="text-lg font-semibold text-neutral-200">3D Model Viewer</h2>
-              <p className="mt-1 text-sm text-neutral-500">
+              <p className="mt-1 text-sm text-neutral-500 sm:hidden">
+                Tap Upload to open a model
+              </p>
+              <p className="mt-1 hidden text-sm text-neutral-500 sm:block">
                 Drop a model or folder here, or click Upload
               </p>
               <p className="mt-1 text-xs text-neutral-600">
-                Supports glTF, GLB, FBX, OBJ (+MTL & textures), STL, PLY, 3DS
+                glTF, GLB, FBX, OBJ, STL, PLY, 3DS
               </p>
             </div>
           </div>
