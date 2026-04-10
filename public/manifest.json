@@ -1,5 +1,5 @@
 {
-  "name": "Photogrammetry Viewer",
+  "name": "OpEzee 3D Viewer",
   "short_name": "Photo Viewer",
   "description": "View photogrammetry 3D scans in studio and unlit modes. Supports glTF, GLB, FBX, OBJ, STL, PLY.",
   "start_url": "/",

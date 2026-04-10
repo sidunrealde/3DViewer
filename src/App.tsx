@@ -53,7 +53,7 @@ function AppContent() {
                   />
                 </svg>
               </div>
-              <h2 className="text-lg font-semibold text-neutral-200">Photogrammetry Viewer</h2>
+              <h2 className="text-lg font-semibold text-neutral-200">OpEzee 3D Viewer</h2>
               <p className="mt-1 text-sm text-neutral-500 sm:hidden">
                 Tap Upload to open a model
               </p>
