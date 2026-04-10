@@ -112,14 +112,6 @@ function AppContent() {
       {/* Companion file prompt for OBJ without textures */}
       <CompanionFileBanner />
 
-      {/* Company logo watermark */}
-      <div className="pointer-events-none absolute bottom-3 left-3 z-10">
-        <img
-          src="/icons/OpEzeeLogo.png"
-          alt="Company logo"
-          className="h-12 w-auto opacity-40 sm:h-14"
-        />
-      </div>
     </div>
   );
 }

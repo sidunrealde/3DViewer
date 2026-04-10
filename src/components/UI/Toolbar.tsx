@@ -11,6 +11,15 @@ export default function Toolbar({
 
   return (
     <div className="pointer-events-auto flex items-center gap-1.5 rounded-xl bg-neutral-900/90 px-2 py-1.5 shadow-lg backdrop-blur-md sm:gap-2 sm:px-3 sm:py-2">
+      {/* Logo */}
+      <img
+        src="/icons/OpEzeeLogo.png"
+        alt="OpEzee"
+        className="h-6 w-auto sm:h-7"
+      />
+
+      <div className="h-6 w-px bg-neutral-700" />
+
       {/* Upload */}
       <FileUpload />
 
