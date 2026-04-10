@@ -15,7 +15,7 @@ export default function Toolbar({
       <img
         src="/icons/OpEzeeLogo.png"
         alt="OpEzee"
-        className="h-6 w-auto sm:h-7"
+        className="h-8 w-auto sm:h-9"
       />
 
       <div className="h-6 w-px bg-neutral-700" />
