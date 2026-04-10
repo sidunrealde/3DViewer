@@ -40,7 +40,7 @@ function AppContent() {
             <div className="text-center">
               <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-neutral-900/80">
                 <svg
-                  className="h-10 w-10 text-violet-400"
+                  className="h-10 w-10 text-cyan-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -71,12 +71,12 @@ function AppContent() {
         {loading && (
           <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-neutral-950/60 backdrop-blur-sm">
             <div className="text-center">
-              <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-neutral-700 border-t-violet-500" />
+              <div className="mx-auto mb-3 h-10 w-10 animate-spin rounded-full border-4 border-neutral-700 border-t-cyan-500" />
               <p className="text-sm text-neutral-300">Loading model...</p>
               {loadingProgress > 0 && loadingProgress < 100 && (
                 <div className="mx-auto mt-2 h-1.5 w-48 overflow-hidden rounded-full bg-neutral-800">
                   <div
-                    className="h-full rounded-full bg-violet-500 transition-all duration-300"
+                    className="h-full rounded-full bg-cyan-500 transition-all duration-300"
                     style={{ width: `${loadingProgress}%` }}
                   />
                 </div>

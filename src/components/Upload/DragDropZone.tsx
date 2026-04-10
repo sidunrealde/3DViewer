@@ -136,10 +136,10 @@ export default function DragDropZone({ children }: { children: ReactNode }) {
 
       {/* Drag overlay */}
       {dragging && (
-        <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-violet-950/60 backdrop-blur-sm">
-          <div className="rounded-2xl border-2 border-dashed border-violet-400 px-12 py-8 text-center">
+        <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-cyan-950/60 backdrop-blur-sm">
+          <div className="rounded-2xl border-2 border-dashed border-cyan-400 px-12 py-8 text-center">
             <svg
-              className="mx-auto mb-3 h-12 w-12 text-violet-400"
+              className="mx-auto mb-3 h-12 w-12 text-cyan-400"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -151,8 +151,8 @@ export default function DragDropZone({ children }: { children: ReactNode }) {
                 d="M12 16V4m0 0l-4 4m4-4l4 4M4 20h16"
               />
             </svg>
-            <p className="text-lg font-medium text-violet-200">Drop your 3D model or folder here</p>
-            <p className="mt-1 text-sm text-violet-400">
+            <p className="text-lg font-medium text-cyan-200">Drop your 3D model or folder here</p>
+            <p className="mt-1 text-sm text-cyan-400">
               glTF, GLB, FBX, OBJ (+MTL & textures), STL, PLY, 3DS
             </p>
           </div>
